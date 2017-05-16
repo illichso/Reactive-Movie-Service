@@ -25,7 +25,7 @@ public class MovieRestController {
     @GetMapping(value = "/{id}/events", produces = TEXT_EVENT_STREAM_VALUE)
     public Flux<MovieEvent> events(@PathVariable String id) {
         return movieService.byId(id)
-                .flatMap(movieService::streamStreams);
+                .flatMapMany(movieService::streamStreams);
     }
 
     @GetMapping
