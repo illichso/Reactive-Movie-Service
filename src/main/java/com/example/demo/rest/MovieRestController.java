@@ -24,9 +24,8 @@ public class MovieRestController {
 
     @GetMapping(value = "/{id}/events", produces = TEXT_EVENT_STREAM_VALUE)
     public Flux<MovieEvent> events(@PathVariable String id) {
-        Mono<Movie> monoMovie = movieService.byId(id);
-        return
-                monoMovie.flatMap(movie -> monoMovie.ofType(Movie.class));
+        return movieService.byId(id)
+                .flatMap(movieService::streamStreams);
     }
 
     @GetMapping
