@@ -1,17 +1,24 @@
 package com.example.demo;
 
 import com.example.demo.model.Movie;
+import com.example.demo.model.MovieEvent;
 import com.example.demo.repository.MovieRepository;
+import com.example.demo.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.web.reactive.function.server.RouterFunction;
 
 import java.util.Random;
 import java.util.UUID;
 
 import static java.util.stream.Stream.of;
 import static org.springframework.boot.SpringApplication.run;
+import static org.springframework.http.MediaType.TEXT_EVENT_STREAM;
+import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
+import static org.springframework.web.reactive.function.server.RouterFunctions.route;
+import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 @SpringBootApplication
 public class DemoApplication {
@@ -21,6 +28,19 @@ public class DemoApplication {
     @Autowired
     public DemoApplication(MovieRepository movieRepository) {
         this.movieRepository = movieRepository;
+    }
+
+    @Bean
+    RouterFunction<?> routes(MovieService movieService) {
+        return route(GET("/movies"),
+                request -> ok().body(movieService.all(), Movie.class))
+                .andRoute(GET("/movies/{id}"),
+                        request -> ok().body(movieService.byId(request.pathVariable("id")), Movie.class))
+                .andRoute(GET("/movies/{id}/events"),
+                        request -> ok()
+                                .contentType(TEXT_EVENT_STREAM)
+                                .body(movieService.byId(request.pathVariable("id"))
+                                        .flatMapMany(movieService::streamStreams), MovieEvent.class));
     }
 
     @Bean
